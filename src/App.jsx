@@ -398,14 +398,12 @@ function App() {
             </span>
           </div>
 
-          <div className="footer-section" style={{ marginTop: '3rem' }}>
-            <div className="signature-line" style={{ minWidth: '220px' }}>
-              <div style={{ marginBottom: '40px', fontSize: '1.1rem', fontWeight: 'bold' }}>{invoiceData.preparedBy || '........................'}</div>
-              {invoiceData.signatureLabel}
+          <div className="footer-section" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ borderTop: '1px solid #000', paddingTop: '0.5rem', width: '300px' }}>
+              <strong>{invoiceData.signatureLabel}:</strong> <span style={{ fontSize: '1.1rem', marginLeft: '0.5rem' }}>{invoiceData.preparedBy || '........................'}</span>
             </div>
-            <div className="signature-line" style={{ minWidth: '220px' }}>
-              <div style={{ marginBottom: '40px' }}></div>
-              Cashier's Signature
+            <div style={{ borderTop: '1px solid #000', paddingTop: '0.5rem', width: '300px', marginTop: '1rem' }}>
+              <strong>Cashier's Signature:</strong> <span style={{ marginLeft: '0.5rem' }}>........................</span>
             </div>
           </div>
 
