@@ -215,7 +215,7 @@ h1, h2, h3 {
 .invoice-a4 {
   width: 210mm;
   min-height: 297mm;
-  padding: 15mm;
+  padding: 10mm;
   background: white;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   transform-origin: top center;
@@ -305,8 +305,8 @@ h1, h2, h3 {
   display: flex;
   justify-content: space-between;
   border-bottom: 2px solid #000;
-  padding-bottom: 1rem;
-  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .logo-container img {
@@ -325,7 +325,7 @@ h1, h2, h3 {
 
 .invoice-title-box {
   text-align: center;
-  margin: 1.5rem 0;
+  margin: 0.75rem 0;
 }
 
 .invoice-title {
@@ -340,8 +340,8 @@ h1, h2, h3 {
 .details-grid {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
-  gap: 2rem;
-  margin-bottom: 1.5rem;
+  gap: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .details-block p {
@@ -357,7 +357,7 @@ h1, h2, h3 {
 .invoice-table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .invoice-table th, .invoice-table td {
@@ -377,7 +377,7 @@ h1, h2, h3 {
 .totals-section {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .totals-table {
@@ -397,8 +397,8 @@ h1, h2, h3 {
 
 .amount-words {
   border: 1px solid #000;
-  padding: 0.5rem;
-  margin-bottom: 1rem;
+  padding: 0.4rem;
+  margin-bottom: 0.5rem;
 }
 
 .footer-section {
