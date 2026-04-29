@@ -267,20 +267,32 @@ h1, h2, h3 {
 /* Print Specific Styles */
 @media print {
   body {
-    background: white;
-    padding: 0;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    -webkit-print-color-adjust: exact;
   }
-  .editor-section, .btn-print-container, .help-text {
+  .editor-section, .btn-print-container, .help-text, .btn-add, .btn-reset, .btn-remove {
     display: none !important;
   }
   .preview-section {
-    box-shadow: none;
-    border-radius: 0;
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    position: static !important;
   }
   .invoice-a4 {
-    margin: 0;
-    width: 100%;
-    padding: 10mm;
+    margin: 0 !important;
+    padding: 10mm !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    box-shadow: none !important;
+    transform: none !important;
+    border: none !important;
   }
   @page {
     size: A4;
