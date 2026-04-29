@@ -63,7 +63,7 @@ function App() {
     signatureLabel: 'Prepared by',
     address: {
       zone: '',
-      kebele: '',
+      Woreda: '',
       houseNo: ''
     }
   });
@@ -192,8 +192,8 @@ function App() {
             <input type="text" name="address.zone" value={invoiceData.address.zone} onChange={handleInputChange} className="form-input" />
           </div>
           <div className="form-group">
-            <label>Kebele</label>
-            <input type="text" name="address.kebele" value={invoiceData.address.kebele} onChange={handleInputChange} className="form-input" />
+            <label>Woreda</label>
+            <input type="text" name="address.Woreda" value={invoiceData.address.Woreda} onChange={handleInputChange} className="form-input" />
           </div>
           <div className="form-group">
             <label>House No.</label>
@@ -341,7 +341,7 @@ function App() {
               <p><span className="details-label">Trade name:</span> {invoiceData.buyerTradeName || '........................................'}</p>
               <p><span className="details-label">Buyer's TIN:</span> {invoiceData.buyerTin || '........................................'}</p>
               <p><span className="details-label">Buyer's VAT:</span> {invoiceData.buyerVat || '........................................'}</p>
-              <p><span className="details-label">Address:</span> Zone: {invoiceData.address.zone || '.....'} Kebele: {invoiceData.address.kebele || '.....'} House No: {invoiceData.address.houseNo || '.....'}</p>
+              <p><span className="details-label">Address:</span> Zone: {invoiceData.address.zone || '.....'} Woreda: {invoiceData.address.Woreda || '.....'} House No: {invoiceData.address.houseNo || '.....'}</p>
             </div>
             <div className="details-block">
               <p><span className="details-label">Date:</span> {invoiceData.date}</p>
@@ -369,11 +369,6 @@ function App() {
                   <td>{item.qty}</td>
                   <td>{item.unitPrice.toLocaleString()}</td>
                   <td>{(item.qty * item.unitPrice).toLocaleString()}</td>
-                </tr>
-              ))}
-              {[...Array(Math.max(0, 6 - items.length))].map((_, i) => (
-                <tr key={`empty-${i}`} style={{ height: '22px' }}>
-                  <td></td><td></td><td></td><td></td><td></td><td></td>
                 </tr>
               ))}
             </tbody>
