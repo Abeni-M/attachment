@@ -39,6 +39,7 @@ function App() {
     buyerVat: '',
     paymentMode: 'Cash',
     chequeNo: '',
+    preparedBy: '',
     address: {
       zone: '',
       kebele: '',
@@ -196,6 +197,11 @@ function App() {
           )}
         </div>
 
+        <div className="form-group">
+          <label>Prepared By</label>
+          <input type="text" name="preparedBy" value={invoiceData.preparedBy} onChange={handleInputChange} className="form-input" placeholder="Enter name of person preparing invoice" />
+        </div>
+
         <div style={{ marginTop: '2rem' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '1rem', color: '#1e293b', borderLeft: '4px solid #6366f1', paddingLeft: '0.75rem' }}>
             🛒 Product & Pricing Details
@@ -284,7 +290,7 @@ function App() {
             <div className="company-info">
               <div className="company-name" style={{ fontSize: '1.8rem', marginBottom: '0.25rem' }}>ኩደጃ ትሬዲንግ ኃ/የተ/የግ/ማህበር</div>
               <div className="company-name" style={{ fontSize: '1.4rem' }}>KUDEJA TRADING PLC</div>
-              <p style={{ marginTop: '0.5rem' }}>Address: AA, Kirkos woreda, 09 kebele, Dembel city center sfs 037</p>
+              <p style={{ marginTop: '0.5rem' }}>Address: A.A, Subcity Kirkos woreda, 09 , Dembel building  H.No 1146  SFS 037</p>
               <p>Supplier's TIN: 0052154477</p>
               <p>Supplier's VAT Reg. No: 11644720010</p>
               {/* <p>Date of Registration: 01/2010 E.C.</p> */}
@@ -384,13 +390,16 @@ function App() {
           </div>
 
           <div className="footer-section" style={{ marginTop: '1.5rem' }}>
-            <div className="signature-line">Prepared by</div>
+            <div className="signature-line">
+              <div style={{ marginBottom: '5px' }}>{invoiceData.preparedBy || '........................'}</div>
+              Prepared by
+            </div>
             <div className="signature-line">Cashier's Signature</div>
           </div>
 
           <div style={{ marginTop: '1rem', fontSize: '10px', textAlign: 'center', borderTop: '1px solid #eee', paddingTop: '0.5rem' }}>
             INVALID WITHOUT FISCAL RECEIPT ATTACHMENT<br />
-            Distribution: Original - Customer | 1st Copy - Accounts | 2nd Copy - Pad
+            Distribution: Original - Customer | 1st Copy - Accounts |
           </div>
         </div>
       </main>
