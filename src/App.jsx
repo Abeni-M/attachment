@@ -287,16 +287,16 @@ function App() {
             <div className="logo-container">
               <img src={logo} alt="Kudeja Logo" style={{ height: '110px', objectFit: 'contain' }} />
             </div>
-              <div className="company-info">
-                <div className="company-name" style={{ fontSize: '1.8rem', marginBottom: '0.25rem' }}>ኩደጃ ትሬዲንግ ኃ/የተ/የግ/ማህበር</div>
-                <div className="company-name" style={{ fontSize: '1.4rem' }}>KUDEJA TRADING PLC</div>
-                <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#000' }}>
-                  A.A, Subcity Kirkos woreda, 09,<br />
-                  Dembel building H.No 1146, SFS 037
-                </div>
-                <p style={{ marginTop: '0.25rem' }}>Supplier's TIN: 0052154477</p>
-                <p>Supplier's VAT Reg. No: 11644720010</p>
+            <div className="company-info">
+              <div className="company-name" style={{ fontSize: '1.8rem', marginBottom: '0.25rem' }}>ኩደጃ ትሬዲንግ ኃ/የተ/የግ/ማህበር</div>
+              <div className="company-name" style={{ fontSize: '1.4rem' }}>KUDEJA TRADING PLC</div>
+              <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#000' }}>
+                A.A, Subcity Kirkos woreda, 09,<br />
+                Dembel building H.No 1146 Shop No SFS/037
               </div>
+              <p style={{ marginTop: '0.25rem' }}>Supplier's TIN: 0052154477</p>
+              <p>Supplier's VAT Reg. No: 11644720010</p>
+            </div>
           </div>
 
           <div className="invoice-title-box">
