@@ -40,6 +40,7 @@ function App() {
     paymentMode: 'Cash',
     chequeNo: '',
     preparedBy: '',
+    signatureLabel: 'Prepared by',
     address: {
       zone: '',
       kebele: '',
@@ -197,9 +198,15 @@ function App() {
           )}
         </div>
 
-        <div className="form-group">
-          <label>Prepared By</label>
-          <input type="text" name="preparedBy" value={invoiceData.preparedBy} onChange={handleInputChange} className="form-input" placeholder="Enter name of person preparing invoice" />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="form-group">
+            <label>Signature Label</label>
+            <input type="text" name="signatureLabel" value={invoiceData.signatureLabel} onChange={handleInputChange} className="form-input" placeholder="e.g. Prepared by" />
+          </div>
+          <div className="form-group">
+            <label>Prepared By (Name)</label>
+            <input type="text" name="preparedBy" value={invoiceData.preparedBy} onChange={handleInputChange} className="form-input" placeholder="Name" />
+          </div>
         </div>
 
         <div style={{ marginTop: '2rem' }}>
@@ -391,12 +398,15 @@ function App() {
             </span>
           </div>
 
-          <div className="footer-section" style={{ marginTop: '1.5rem' }}>
-            <div className="signature-line">
-              <div style={{ marginBottom: '5px' }}>{invoiceData.preparedBy || '........................'}</div>
-              Prepared by
+          <div className="footer-section" style={{ marginTop: '3rem' }}>
+            <div className="signature-line" style={{ minWidth: '220px' }}>
+              <div style={{ marginBottom: '40px', fontSize: '1.1rem', fontWeight: 'bold' }}>{invoiceData.preparedBy || '........................'}</div>
+              {invoiceData.signatureLabel}
             </div>
-            <div className="signature-line">Cashier's Signature</div>
+            <div className="signature-line" style={{ minWidth: '220px' }}>
+              <div style={{ marginBottom: '40px' }}></div>
+              Cashier's Signature
+            </div>
           </div>
 
           <div style={{ marginTop: '1rem', fontSize: '10px', textAlign: 'center', borderTop: '1px solid #eee', paddingTop: '0.5rem' }}>
