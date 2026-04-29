@@ -398,14 +398,14 @@ function App() {
             </span>
           </div>
 
-          <div className="footer-section" style={{ marginTop: '2.5rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            <p style={{ display: 'flex', alignItems: 'baseline' }}>
-              <span style={{ fontWeight: 'bold', minWidth: '110px' }}>{invoiceData.signatureLabel}:</span>
+          <div className="footer-section" style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <p style={{ display: 'flex', alignItems: 'baseline', width: '300px' }}>
+              <span style={{ fontWeight: 'bold', minWidth: '100px' }}>{invoiceData.signatureLabel}:</span>
               <span style={{ flex: 1, borderBottom: '1px dotted #000', marginLeft: '5px', paddingLeft: '5px', minHeight: '1.2em' }}>
                 {invoiceData.preparedBy}
               </span>
             </p>
-            <p style={{ display: 'flex', alignItems: 'baseline', marginTop: '0.5rem' }}>
+            <p style={{ display: 'flex', alignItems: 'baseline', width: '300px' }}>
               <span style={{ fontWeight: 'bold', minWidth: '110px' }}>Cashier's Sig.:</span>
               <span style={{ flex: 1, borderBottom: '1px dotted #000', marginLeft: '5px', minHeight: '1.2em' }}></span>
             </p>
