@@ -308,7 +308,7 @@ function App() {
 
           <div className="invoice-title-box">
             <div className="invoice-title">
-              የካሽ በእጅ ሽያጭ አባሪ ደረሰኝ <br />
+              የእጅ በእጅ ሽያጭ አባሪ ደረሰኝ <br />
               CASH SALES ATTACHMENT INVOICE
             </div>
           </div>
