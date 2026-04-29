@@ -145,7 +145,7 @@ function App() {
       {/* Editor Section */}
       <aside className="editor-section">
         <h1 className="editor-title">
-          <span>📝</span> Sales Invoice Editor
+          <span>📝</span> Sales Attachment
         </h1>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -297,12 +297,12 @@ function App() {
           onClick={() => { if (confirm('Clear all data?')) { setItems([{ id: Date.now(), description: '', unit: 'Pcs', qty: 1, unitPrice: 0 }]); setInvoiceData(prev => ({ ...prev, buyerName: '', buyerTradeName: '', buyerTin: '', buyerVat: '', address: { zone: '', kebele: '', houseNo: '' } })); } }}
           className="btn btn-reset"
         >
-          🗑️ Reset Form
+          Reset Form
         </button>
 
         <div className="btn-print-container" style={{ marginTop: '2rem' }}>
           <button onClick={handlePrint} className="btn btn-primary" style={{ width: '100%' }}>
-            🖨️ Export & Print A4
+            Export & Print
           </button>
         </div>
       </aside>
@@ -363,7 +363,7 @@ function App() {
             <tbody>
               {items.map((item, index) => (
                 <tr key={item.id}>
-                  <td>{index + 1}</td>
+                  <td>{index + 0}</td>
                   <td className="text-left">{item.description}</td>
                   <td>{item.unit || 'Pcs'}</td>
                   <td>{item.qty}</td>
@@ -426,7 +426,7 @@ function App() {
             </p>
           </div>
 
-          <div style={{ marginTop: '1rem', fontSize: '10px', textAlign: 'center', borderTop: '1px solid #eee', paddingTop: '0.5rem' }}>
+          <div style={{ marginTop: '1rem', fontSize: '10px', textAlign: 'center', borderTop: '1px solid #000000ff', paddingTop: '0.5rem' }}>
             INVALID WITHOUT FISCAL RECEIPT ATTACHMENT<br />
             Distribution: Original - Customer | 1st Copy - Accounts |
           </div>
