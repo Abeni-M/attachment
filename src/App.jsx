@@ -30,7 +30,7 @@ const numberToWords = (num) => {
 
 function App() {
   const [invoiceData, setInvoiceData] = useState({
-    fsNo: '149',
+    fsNo: '',
     date: new Date().toISOString().split('T')[0],
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     buyerName: '',
@@ -284,10 +284,10 @@ function App() {
             <div className="company-info">
               <div className="company-name" style={{ fontSize: '1.8rem', marginBottom: '0.25rem' }}>ኩደጃ ትሬዲንግ ኃ/የተ/የግ/ማህበር</div>
               <div className="company-name" style={{ fontSize: '1.4rem' }}>KUDEJA TRADING PLC</div>
-              <p style={{ marginTop: '0.5rem' }}>Address: S/C W. 09 H.No. 059/309</p>
+              <p style={{ marginTop: '0.5rem' }}>Address: AA, Kirkos woreda, 09 kebele, Dembel city center sfs 037</p>
               <p>Supplier's TIN: 0052154477</p>
               <p>Supplier's VAT Reg. No: 11644720010</p>
-              <p>Date of Registration: 01/2010 E.C.</p>
+              {/* <p>Date of Registration: 01/2010 E.C.</p> */}
             </div>
           </div>
 
