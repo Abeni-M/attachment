@@ -363,7 +363,7 @@ function App() {
             <tbody>
               {items.map((item, index) => (
                 <tr key={item.id}>
-                  <td>{index + 0}</td>
+                  <td>{index + 1}</td>
                   <td className="text-left">{item.description}</td>
                   <td>{item.unit || 'Pcs'}</td>
                   <td>{item.qty}</td>
