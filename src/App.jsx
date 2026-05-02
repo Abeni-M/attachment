@@ -168,7 +168,7 @@ function App() {
 
   const saveRecordToHistory = async () => {
     setIsSyncing(true);
-    
+
     const invoiceToSave = {
       invoiceData: { ...invoiceData },
       items: [...items],
@@ -178,10 +178,10 @@ function App() {
 
     if (editingId) {
       // Update existing record locally first
-      setHistory(prev => prev.map(item => 
+      setHistory(prev => prev.map(item =>
         item.id === editingId ? { ...item, ...invoiceToSave } : item
       ));
-      
+
       if (isFirebaseConfigured) {
         await updateHistoryOnline(editingId, invoiceToSave);
       }
@@ -196,13 +196,13 @@ function App() {
         const newId = await saveHistoryOnline(invoiceToSave);
         if (newId) {
           // Update the local record with the real Firebase ID
-          setHistory(prev => prev.map(item => 
+          setHistory(prev => prev.map(item =>
             item.id === tempId ? { ...item, id: newId } : item
           ));
         }
       }
     }
-    
+
     setIsSyncing(false);
   };
 
@@ -250,11 +250,11 @@ function App() {
     if (confirm('Delete this history record permanently?')) {
       setIsSyncing(true);
       setHistory(prev => prev.filter(item => item.id !== id));
-      
+
       if (isFirebaseConfigured) {
         await deleteHistoryOnline(id);
       }
-      
+
       if (editingId === id) {
         createNewInvoice();
       }
@@ -406,17 +406,17 @@ function App() {
           border: 1px solid #fbbf24;
         }
       `}</style>
-      
+
       {/* Editor Section */}
       <aside className="editor-section">
         <div className="tabs-header">
-          <button 
+          <button
             className={`tab-btn ${viewMode === 'edit' ? 'active' : ''}`}
             onClick={() => setViewMode('edit')}
           >
             {isReadOnly ? '📋 Viewing Detail' : '✍️ Create New'}
           </button>
-          <button 
+          <button
             className={`tab-btn ${viewMode === 'history' ? 'active' : ''}`}
             onClick={() => setViewMode('history')}
           >
@@ -434,18 +434,18 @@ function App() {
                     Create New Instead
                   </button>
                 </div>
-                <button 
-                  onClick={enableEditing} 
-                  className="btn" 
+                <button
+                  onClick={enableEditing}
+                  className="btn"
                   style={{ width: '100%', background: '#fffbeb', border: '2px solid #fbbf24', color: '#92400e', fontSize: '0.9rem', padding: '0.6rem' }}
                 >
-                  🔓 Unlock & Edit This Record
+                  🔓 Unlock & Edit
                 </button>
               </div>
             )}
-            
+
             <h1 className="editor-title">
-              <span>{isReadOnly ? '📄' : (editingId ? '✏️' : '📝')}</span> 
+              <span>{isReadOnly ? '📄' : (editingId ? '✏️' : '📝')}</span>
               {isReadOnly ? ' Sales Attachment' : (editingId ? ' Edit Saved Record' : ' Sales Attachment')}
             </h1>
 
@@ -461,7 +461,7 @@ function App() {
                 <span className="help-text">Transaction date</span>
               </div>
             </div>
-            
+
 
             <div className="form-group">
               <label>Buyer's Name</label>
@@ -503,33 +503,9 @@ function App() {
               </div>
             </div>
 
-            <div className="form-group" style={{ marginTop: '1rem' }}>
-              <label>Payment Method</label>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                <label className="checkbox-custom">
-                  <input type="radio" name="paymentMode" value="Cash" checked={invoiceData.paymentMode === 'Cash'} onChange={handleInputChange} disabled={isReadOnly} />
-                  Cash
-                </label>
-                <label className="checkbox-custom">
-                  <input type="radio" name="paymentMode" value="Cheque" checked={invoiceData.paymentMode === 'Cheque'} onChange={handleInputChange} disabled={isReadOnly} />
-                  Cheque
-                </label>
-              </div>
-              {invoiceData.paymentMode === 'Cheque' && (
-                <input type="text" name="chequeNo" value={invoiceData.chequeNo} onChange={handleInputChange} disabled={isReadOnly} className="form-input" style={{ marginTop: '0.5rem' }} placeholder="Enter Cheque Number" />
-              )}
-            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="form-group">
-                <label>Signature Label</label>
-                <input type="text" name="signatureLabel" value={invoiceData.signatureLabel} onChange={handleInputChange} disabled={isReadOnly} className="form-input" placeholder="e.g. Prepared by" />
-              </div>
-              <div className="form-group">
-                <label>Prepared By (Name)</label>
-                <input type="text" name="preparedBy" value={invoiceData.preparedBy} onChange={handleInputChange} disabled={isReadOnly} className="form-input" placeholder="Name" />
-              </div>
-            </div>
+
+
 
             <div style={{ marginTop: '2rem' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '1rem', color: '#1e293b', borderLeft: '4px solid #6366f1', paddingLeft: '0.75rem' }}>
@@ -589,6 +565,7 @@ function App() {
                           placeholder="0.00"
                         />
                       </td>
+
                       {!isReadOnly && (
                         <td style={{ width: '50px' }}>
                           <button onClick={() => removeItem(item.id)} className="btn btn-remove" style={{ width: '100%', height: '45px' }}>✕</button>
@@ -612,9 +589,36 @@ function App() {
               </>
             )}
 
+            <div className="form-group" style={{ marginTop: '1rem' }}>
+              <label>Payment Method</label>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                <label className="checkbox-custom">
+                  <input type="radio" name="paymentMode" value="Cash" checked={invoiceData.paymentMode === 'Cash'} onChange={handleInputChange} disabled={isReadOnly} />
+                  Cash
+                </label>
+                <label className="checkbox-custom">
+                  <input type="radio" name="paymentMode" value="Cheque" checked={invoiceData.paymentMode === 'Cheque'} onChange={handleInputChange} disabled={isReadOnly} />
+                  Cheque
+                </label>
+              </div>
+              {invoiceData.paymentMode === 'Cheque' && (
+                <input type="text" name="chequeNo" value={invoiceData.chequeNo} onChange={handleInputChange} disabled={isReadOnly} className="form-input" style={{ marginTop: '0.5rem' }} placeholder="Enter Cheque Number" />
+              )}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="form-group">
+                <label>Signature Label</label>
+                <input type="text" name="signatureLabel" value={invoiceData.signatureLabel} readOnly className="form-input" style={{ backgroundColor: '#f1f5f9', cursor: 'not-allowed', color: '#64748b' }} placeholder="e.g. Prepared by" />
+              </div>
+              <div className="form-group">
+                <label>Prepared By (Name)</label>
+                <textarea name="preparedBy" value={invoiceData.preparedBy} onChange={handleInputChange} disabled={isReadOnly} className="form-input" placeholder="Name" style={{ resize: 'none', height: '42px', overflow: 'hidden' }} />
+              </div>
+            </div>
+
             <div className="btn-print-container" style={{ marginTop: '2rem' }}>
               <button onClick={handlePrint} className="btn btn-primary" style={{ width: '100%' }}>
-                {isReadOnly ? '🖨️ Print Record Again' : (editingId ? '💾 Update & Print Saved Record' : '📤 Export & Save to History')}
+                {isReadOnly ? '🖨️ Print Again' : (editingId ? '💾 Update & Print ' : '📤 Export ')}
               </button>
             </div>
           </>
@@ -630,13 +634,13 @@ function App() {
                 </p>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ 
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem', 
-                  padding: '0.4rem 0.8rem', 
-                  borderRadius: '2rem', 
-                  fontSize: '0.75rem', 
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '2rem',
+                  fontSize: '0.75rem',
                   fontWeight: '700',
                   background: isFirebaseConfigured ? '#ecfdf5' : '#fef2f2',
                   color: isFirebaseConfigured ? '#059669' : '#dc2626',
@@ -653,11 +657,11 @@ function App() {
             </div>
 
             {isSyncing && (
-              <div style={{ 
-                background: 'rgba(255,255,255,0.8)', 
-                padding: '1rem', 
-                borderRadius: '1rem', 
-                textAlign: 'center', 
+              <div style={{
+                background: 'rgba(255,255,255,0.8)',
+                padding: '1rem',
+                borderRadius: '1rem',
+                textAlign: 'center',
                 marginBottom: '1rem',
                 border: '1px solid #e2e8f0',
                 color: '#6366f1',
@@ -666,7 +670,7 @@ function App() {
                 🔄 Synchronizing...
               </div>
             )}
-            
+
             <div className="history-list">
               {history.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '3rem', background: '#f8fafc', borderRadius: '1.5rem', border: '2px dashed #e2e8f0' }}>
