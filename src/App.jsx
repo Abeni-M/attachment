@@ -49,6 +49,25 @@ const numberToWords = (num) => {
   return result;
 };
 
+// Utility to format YYYY-MM-DD to DD-MM-YYYY
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  return `${parts[2]}-${parts[1]}-${parts[0]}`;
+};
+
+// Utility to format Date object to DD-MM-YYYY HH:MM
+const formatDateTime = (date = new Date()) => {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${day}-${month}-${year} ${hours}:${minutes}`;
+};
+
 function App() {
   const [invoiceData, setInvoiceData] = useState({
     fsNo: '',
@@ -173,7 +192,7 @@ function App() {
       invoiceData: { ...invoiceData },
       items: [...items],
       total: total,
-      timestamp: editingId ? `${new Date().toLocaleString()} (Edited)` : new Date().toLocaleString()
+      timestamp: editingId ? `${formatDateTime()} (Edited)` : formatDateTime()
     };
 
     if (editingId) {
@@ -740,7 +759,7 @@ function App() {
               <p><span className="details-label">Address:</span> Zone: {invoiceData.address.zone || '.....'} Woreda: {invoiceData.address.Woreda || '.....'} House No: {invoiceData.address.houseNo || '.....'}</p>
             </div>
             <div className="details-block">
-              <p><span className="details-label">Date:</span> {invoiceData.date}</p>
+              <p><span className="details-label">Date:</span> {formatDate(invoiceData.date)}</p>
               <p><span className="details-label">Time:</span> {invoiceData.time}</p>
             </div>
           </div>
