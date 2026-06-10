@@ -1340,7 +1340,7 @@ function App() {
             </h2>
             
             {/* Metric Cards Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
               <div className="dashboard-card" style={{
                 background: 'white',
                 padding: '1.5rem',
@@ -1357,23 +1357,7 @@ function App() {
                 <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Unique items registered</span>
               </div>
 
-              <div className="dashboard-card" style={{
-                background: 'white',
-                padding: '1.5rem',
-                borderRadius: '1.25rem',
-                border: '1px solid #e2e8f0',
-                borderLeft: '5px solid #10b981',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem'
-              }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>Total Categories</span>
-                <span style={{ fontSize: '2rem', fontWeight: '800', color: '#10b981' }}>
-                  {new Set(products.map(p => p.category || 'General')).size}
-                </span>
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Distinct product categories</span>
-              </div>
+
 
               <div className="dashboard-card" style={{
                 background: 'white',
