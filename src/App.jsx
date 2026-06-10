@@ -259,13 +259,12 @@ function App() {
       let prodIndex = updatedProducts.findIndex(p => normalize(p.name) === name);
 
       if (prodIndex === -1 && diff > 0) {
-        // Product doesn't exist, create it with 5 units starting capacity
+        // Product doesn't exist — auto-create it with 5 units starting capacity
         const matchedItem = newItems.find(item => normalize(item.description) === name);
         const unit = matchedItem ? matchedItem.unit : 'Pcs';
         const unitPrice = matchedItem ? parseFloat(matchedItem.unitPrice) || 0 : 0;
 
-        const newProduct = {
-          id: 'prod_' + Date.now() + Math.random().toString(36).substr(2, 5),
+        const productPayload = {
           name: matchedItem ? matchedItem.description.trim() : name,
           unit: unit,
           unitPrice: unitPrice || 0,
@@ -274,21 +273,15 @@ function App() {
           category: 'General'
         };
 
-        updatedProducts.push(newProduct);
-
+        // Firebase-first: save to Firestore and get the real ID
+        let realId = 'prod_' + Date.now() + Math.random().toString(36).substr(2, 5);
         if (isFirebaseConfigured) {
-          const cloudId = await saveProductOnline({
-            name: newProduct.name,
-            unit: newProduct.unit,
-            unitPrice: newProduct.unitPrice,
-            stockQty: newProduct.stockQty,
-            minStockQty: newProduct.minStockQty,
-            category: newProduct.category
-          });
-          if (cloudId) {
-            newProduct.id = cloudId;
-          }
+          const cloudId = await saveProductOnline(productPayload);
+          if (cloudId) realId = cloudId;
         }
+
+        const newProduct = { id: realId, ...productPayload };
+        updatedProducts.push(newProduct);
       } else if (prodIndex !== -1) {
         const product = updatedProducts[prodIndex];
         const newStockQty = Math.max(0, (parseFloat(product.stockQty) || 0) - diff);
@@ -319,12 +312,13 @@ function App() {
 
   const deleteProduct = async (id) => {
     if (confirm('Are you sure you want to delete this product from stock?')) {
-      const updated = products.filter(p => p.id !== id);
-      setProducts(updated);
-      localStorage.setItem('stock_products', JSON.stringify(updated));
+      // Firebase-first: remove from Firestore before local state
       if (isFirebaseConfigured) {
         await deleteProductOnline(id);
       }
+      const updated = products.filter(p => p.id !== id);
+      setProducts(updated);
+      localStorage.setItem('stock_products', JSON.stringify(updated));
     }
   };
 
@@ -352,13 +346,15 @@ function App() {
     let updatedProducts = [...products];
 
     if (productData.id) {
-      updatedProducts = products.map(p => p.id === productData.id ? { ...p, ...parsedProduct } : p);
-      setProducts(updatedProducts);
-      localStorage.setItem('stock_products', JSON.stringify(updatedProducts));
+      // UPDATE: Firebase-first, then sync local
       if (isFirebaseConfigured) {
         await updateProductOnline(productData.id, parsedProduct);
       }
+      updatedProducts = products.map(p => p.id === productData.id ? { ...p, ...parsedProduct } : p);
+      setProducts(updatedProducts);
+      localStorage.setItem('stock_products', JSON.stringify(updatedProducts));
     } else {
+      // CREATE: check duplicate first
       const exists = products.some(p => p.name.trim().toLowerCase() === parsedProduct.name.toLowerCase());
       if (exists) {
         alert('A product with this name already exists in stock.');
@@ -366,20 +362,17 @@ function App() {
         return;
       }
 
-      const tempId = 'prod_' + Date.now();
-      const newProduct = { id: tempId, ...parsedProduct };
+      // Firebase-first: get the real Firestore ID before storing locally
+      let realId = 'prod_' + Date.now();
+      if (isFirebaseConfigured) {
+        const cloudId = await saveProductOnline(parsedProduct);
+        if (cloudId) realId = cloudId;
+      }
+
+      const newProduct = { id: realId, ...parsedProduct };
       updatedProducts = [...products, newProduct];
       setProducts(updatedProducts);
       localStorage.setItem('stock_products', JSON.stringify(updatedProducts));
-
-      if (isFirebaseConfigured) {
-        const cloudId = await saveProductOnline(parsedProduct);
-        if (cloudId) {
-          setProducts(prev => prev.map(p => p.id === tempId ? { ...p, id: cloudId } : p));
-          const syncedLocal = updatedProducts.map(p => p.id === tempId ? { ...p, id: cloudId } : p);
-          localStorage.setItem('stock_products', JSON.stringify(syncedLocal));
-        }
-      }
     }
 
     setIsSyncing(false);
