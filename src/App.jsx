@@ -1368,11 +1368,11 @@ function App() {
                 flexDirection: 'column',
                 gap: '0.5rem'
               }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>Total Stock Value</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>Total Categories</span>
                 <span style={{ fontSize: '2rem', fontWeight: '800', color: '#10b981' }}>
-                  {products.reduce((sum, p) => sum + ((parseFloat(p.stockQty) || 0) * (parseFloat(p.unitPrice) || 0)), 0).toLocaleString()} <span style={{ fontSize: '1rem', fontWeight: '700' }}>ETB</span>
+                  {new Set(products.map(p => p.category || 'General')).size}
                 </span>
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Based on current unit prices</span>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Distinct product categories</span>
               </div>
 
               <div className="dashboard-card" style={{
@@ -1448,7 +1448,7 @@ function App() {
                 flexDirection: 'column'
               }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#ef4444', marginBottom: '1.25rem', borderBottom: '2px solid #fee2e2', paddingBottom: '0.5rem' }}>
-                  ⚠️ Urgent Restock Alerts
+                   Urgent Restock Alerts
                 </h3>
                 
                 {(() => {
