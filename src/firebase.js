@@ -79,4 +79,62 @@ export const deleteHistoryOnline = async (id) => {
   }
 };
 
+const PRODUCTS_COLLECTION = "products";
+
+export const saveProductOnline = async (product) => {
+  if (!isFirebaseConfigured) return null;
+  try {
+    const docRef = await addDoc(collection(db, PRODUCTS_COLLECTION), {
+      ...product,
+      serverTimestamp: new Date().toISOString()
+    });
+    return docRef.id;
+  } catch (e) {
+    console.error("Error adding product online: ", e);
+    return null;
+  }
+};
+
+export const updateProductOnline = async (id, data) => {
+  if (!isFirebaseConfigured) return false;
+  try {
+    const docRef = doc(db, PRODUCTS_COLLECTION, id);
+    await updateDoc(docRef, {
+      ...data,
+      updatedAt: new Date().toISOString()
+    });
+    return true;
+  } catch (e) {
+    console.error("Error updating product online: ", e);
+    return false;
+  }
+};
+
+export const fetchProductsOnline = async () => {
+  if (!isFirebaseConfigured) return [];
+  try {
+    const q = query(collection(db, PRODUCTS_COLLECTION), orderBy("name", "asc"));
+    const querySnapshot = await getDocs(q);
+    const products = [];
+    querySnapshot.forEach((doc) => {
+      products.push({ id: doc.id, ...doc.data() });
+    });
+    return products;
+  } catch (e) {
+    console.error("Error fetching products online: ", e);
+    return [];
+  }
+};
+
+export const deleteProductOnline = async (id) => {
+  if (!isFirebaseConfigured) return false;
+  try {
+    await deleteDoc(doc(db, PRODUCTS_COLLECTION, id));
+    return true;
+  } catch (e) {
+    console.error("Error deleting product online: ", e);
+    return false;
+  }
+};
+
 export default db;
