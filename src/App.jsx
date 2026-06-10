@@ -112,7 +112,7 @@ function App() {
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showProductModal, setShowProductModal] = useState(false);
-  const [productForm, setProductForm] = useState({ id: null, name: '', unit: 'Pcs', unitPrice: '', stockQty: '', minStockQty: 2, category: 'General' });
+  const [productForm, setProductForm] = useState({ id: null, name: '', unit: 'Pcs', unitPrice: '', stockQty: '', maxStockQty: '', minStockQty: 2, category: 'General' });
   const [activeDropdownId, setActiveDropdownId] = useState(null);
 
   // Load history and products from localStorage and Cloud on mount
@@ -264,11 +264,13 @@ function App() {
         const unit = matchedItem ? matchedItem.unit : 'Pcs';
         const unitPrice = matchedItem ? parseFloat(matchedItem.unitPrice) || 0 : 0;
 
+        const startingQty = Math.max(0, 5 - diff);
         const productPayload = {
           name: matchedItem ? matchedItem.description.trim() : name,
           unit: unit,
           unitPrice: unitPrice || 0,
-          stockQty: Math.max(0, 5 - diff), // default starting stock is 5
+          stockQty: startingQty,
+          maxStockQty: 5, // max capacity = initial default stock of 5
           minStockQty: 2,
           category: 'General'
         };
@@ -333,6 +335,7 @@ function App() {
     const priceVal = productData.unitPrice === '' ? 0 : parseFloat(productData.unitPrice);
     const stockVal = productData.stockQty === '' ? 0 : parseFloat(productData.stockQty);
     const minVal = productData.minStockQty === '' ? 0 : parseFloat(productData.minStockQty);
+    const maxVal = productData.maxStockQty === '' ? stockVal : parseFloat(productData.maxStockQty) || stockVal;
 
     const parsedProduct = {
       name: productData.name.trim(),
@@ -347,10 +350,15 @@ function App() {
 
     if (productData.id) {
       // UPDATE: Firebase-first, then sync local
+      // maxStockQty: raise if new stock is higher, otherwise keep existing
+      const existing = products.find(p => p.id === productData.id);
+      const existingMax = parseFloat(existing?.maxStockQty) || 0;
+      const updatedMax = Math.max(existingMax, stockVal, maxVal);
+      const updatePayload = { ...parsedProduct, maxStockQty: updatedMax };
       if (isFirebaseConfigured) {
-        await updateProductOnline(productData.id, parsedProduct);
+        await updateProductOnline(productData.id, updatePayload);
       }
-      updatedProducts = products.map(p => p.id === productData.id ? { ...p, ...parsedProduct } : p);
+      updatedProducts = products.map(p => p.id === productData.id ? { ...p, ...updatePayload } : p);
       setProducts(updatedProducts);
       localStorage.setItem('stock_products', JSON.stringify(updatedProducts));
     } else {
@@ -362,14 +370,17 @@ function App() {
         return;
       }
 
+      // maxStockQty = the stock the user enters at creation time
+      const createPayload = { ...parsedProduct, maxStockQty: Math.max(stockVal, maxVal) || stockVal };
+
       // Firebase-first: get the real Firestore ID before storing locally
       let realId = 'prod_' + Date.now();
       if (isFirebaseConfigured) {
-        const cloudId = await saveProductOnline(parsedProduct);
+        const cloudId = await saveProductOnline(createPayload);
         if (cloudId) realId = cloudId;
       }
 
-      const newProduct = { id: realId, ...parsedProduct };
+      const newProduct = { id: realId, ...createPayload };
       updatedProducts = [...products, newProduct];
       setProducts(updatedProducts);
       localStorage.setItem('stock_products', JSON.stringify(updatedProducts));
@@ -1068,7 +1079,7 @@ function App() {
               {!showProductModal && (
                 <button 
                   onClick={() => {
-                    setProductForm({ id: null, name: '', unit: 'Pcs', unitPrice: '', stockQty: '', minStockQty: 2, category: 'General' });
+                    setProductForm({ id: null, name: '', unit: 'Pcs', unitPrice: '', stockQty: '', maxStockQty: '', minStockQty: 2, category: 'General' });
                     setShowProductModal(true);
                   }} 
                   className="btn btn-primary"
@@ -1259,6 +1270,7 @@ function App() {
                               unit: prod.unit,
                               unitPrice: prod.unitPrice || '',
                               stockQty: prod.stockQty,
+                              maxStockQty: prod.maxStockQty || prod.stockQty || '',
                               minStockQty: prod.minStockQty,
                               category: prod.category || 'General'
                             });
@@ -1403,8 +1415,8 @@ function App() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.25rem' }}>
                     {products.map(p => {
                       const qty = parseFloat(p.stockQty) || 0;
-                      const capMax = Math.max(100, p.minStockQty * 10, qty);
-                      const percent = Math.min(100, (qty / capMax) * 100);
+                      const capMax = Math.max(parseFloat(p.maxStockQty) || qty || 1, qty);
+                      const percent = capMax > 0 ? Math.min(100, (qty / capMax) * 100) : 0;
                       let barColor = '#10b981';
                       if (qty <= 0) barColor = '#ef4444';
                       else if (qty <= p.minStockQty) barColor = '#f59e0b';
