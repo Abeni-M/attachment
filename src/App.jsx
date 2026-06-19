@@ -1,5 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import logo from './assets/image.png';
+import {
+  AlertTriangle,
+  Archive,
+  BarChart3,
+  CheckCircle2,
+  Clock3,
+  Cloud,
+  Edit3,
+  FilePlus,
+  FileText,
+  Mail,
+  Package,
+  PlusSquare,
+  Plug,
+  Printer,
+  RefreshCcw,
+  Save,
+  ShoppingCart,
+  Sparkles,
+  TrendingUp,
+  Trash2,
+  Unlock,
+  Upload,
+  XCircle
+} from 'lucide-react';
 import { 
   saveHistoryOnline, 
   updateHistoryOnline, 
@@ -107,6 +132,7 @@ function App() {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState(null);
 
   // Stock Management States
   const [products, setProducts] = useState([]);
@@ -139,24 +165,26 @@ function App() {
     // 2. Load from Cloud if configured (silent background sync)
     const syncWithCloud = async () => {
       if (isFirebaseConfigured) {
+        setIsSyncing(true);
         try {
           const cloudHistory = await fetchHistoryOnline();
           if (cloudHistory && cloudHistory.length > 0) {
             setHistory(cloudHistory);
             localStorage.setItem('invoice_history', JSON.stringify(cloudHistory));
           }
-        } catch (error) {
-          console.error("Cloud sync history failed silently in background:", error);
-        }
 
-        try {
           const cloudProducts = await fetchProductsOnline();
           if (cloudProducts && cloudProducts.length > 0) {
             setProducts(cloudProducts);
             localStorage.setItem('stock_products', JSON.stringify(cloudProducts));
           }
+
+          setSyncError(null); // Clear errors on successful sync
         } catch (error) {
-          console.error("Cloud sync products failed silently in background:", error);
+          console.error("Cloud database sync failed:", error);
+          setSyncError(error.message || "Failed to synchronize with the cloud database.");
+        } finally {
+          setIsSyncing(false);
         }
       }
     };
@@ -278,8 +306,13 @@ function App() {
         // Firebase-first: save to Firestore and get the real ID
         let realId = 'prod_' + Date.now() + Math.random().toString(36).substr(2, 5);
         if (isFirebaseConfigured) {
-          const cloudId = await saveProductOnline(productPayload);
-          if (cloudId) realId = cloudId;
+          try {
+            const cloudId = await saveProductOnline(productPayload);
+            if (cloudId) realId = cloudId;
+          } catch (err) {
+            console.error(`Failed to sync new product ${productPayload.name}:`, err);
+            setSyncError(err.message || "Failed to sync auto-created product to the cloud.");
+          }
         }
 
         const newProduct = { id: realId, ...productPayload };
@@ -296,14 +329,19 @@ function App() {
         updatedProducts[prodIndex] = updatedProduct;
 
         if (isFirebaseConfigured) {
-          await updateProductOnline(product.id, {
-            name: updatedProduct.name,
-            unit: updatedProduct.unit,
-            unitPrice: updatedProduct.unitPrice,
-            stockQty: updatedProduct.stockQty,
-            minStockQty: updatedProduct.minStockQty,
-            category: updatedProduct.category
-          });
+          try {
+            await updateProductOnline(product.id, {
+              name: updatedProduct.name,
+              unit: updatedProduct.unit,
+              unitPrice: updatedProduct.unitPrice,
+              stockQty: updatedProduct.stockQty,
+              minStockQty: updatedProduct.minStockQty,
+              category: updatedProduct.category
+            });
+          } catch (err) {
+            console.error(`Failed to sync stock update for product ${product.name}:`, err);
+            setSyncError(err.message || "Failed to sync stock changes to the cloud.");
+          }
         }
       }
     }
@@ -314,13 +352,22 @@ function App() {
 
   const deleteProduct = async (id) => {
     if (confirm('Are you sure you want to delete this product from stock?')) {
+      setIsSyncing(true);
+      setSyncError(null);
       // Firebase-first: remove from Firestore before local state
       if (isFirebaseConfigured) {
-        await deleteProductOnline(id);
+        try {
+          await deleteProductOnline(id);
+        } catch (error) {
+          console.error("Failed to delete product online:", error);
+          setSyncError(error.message || "Failed to delete product from the cloud.");
+          alert(`⚠️ Deleted Locally Only:\nDatabase deletion failed (${error.message || "Unknown error"}). The product was removed locally but may still exist in the cloud database.`);
+        }
       }
       const updated = products.filter(p => p.id !== id);
       setProducts(updated);
       localStorage.setItem('stock_products', JSON.stringify(updated));
+      setIsSyncing(false);
     }
   };
 
@@ -331,6 +378,7 @@ function App() {
     }
 
     setIsSyncing(true);
+    setSyncError(null);
 
     const priceVal = productData.unitPrice === '' ? 0 : parseFloat(productData.unitPrice);
     const stockVal = productData.stockQty === '' ? 0 : parseFloat(productData.stockQty);
@@ -356,7 +404,13 @@ function App() {
       const updatedMax = Math.max(existingMax, stockVal, maxVal);
       const updatePayload = { ...parsedProduct, maxStockQty: updatedMax };
       if (isFirebaseConfigured) {
-        await updateProductOnline(productData.id, updatePayload);
+        try {
+          await updateProductOnline(productData.id, updatePayload);
+        } catch (error) {
+          console.error("Failed to update product online:", error);
+          setSyncError(error.message || "Failed to update product on the cloud.");
+          alert(`⚠️ Saved Locally Only:\nDatabase update failed (${error.message || "Unknown error"}). Your changes are saved locally but were not uploaded to the cloud database.`);
+        }
       }
       updatedProducts = products.map(p => p.id === productData.id ? { ...p, ...updatePayload } : p);
       setProducts(updatedProducts);
@@ -376,8 +430,14 @@ function App() {
       // Firebase-first: get the real Firestore ID before storing locally
       let realId = 'prod_' + Date.now();
       if (isFirebaseConfigured) {
-        const cloudId = await saveProductOnline(createPayload);
-        if (cloudId) realId = cloudId;
+        try {
+          const cloudId = await saveProductOnline(createPayload);
+          if (cloudId) realId = cloudId;
+        } catch (error) {
+          console.error("Failed to save product online:", error);
+          setSyncError(error.message || "Failed to save product to the cloud.");
+          alert(`⚠️ Saved Locally Only:\nDatabase write failed (${error.message || "Unknown error"}). The product was saved locally but not uploaded to the cloud database.`);
+        }
       }
 
       const newProduct = { id: realId, ...createPayload };
@@ -408,7 +468,8 @@ function App() {
 
   const subtotal = calculateSubtotal();
   const vat = subtotal * 0.15;
-  const total = subtotal + vat;
+  const withholding = subtotal >= 20001 ? subtotal * 0.03 : 0;
+  const total = subtotal + vat - withholding;
 
   const handlePrint = () => {
     window.print();
@@ -419,6 +480,7 @@ function App() {
 
   const saveRecordToHistory = async () => {
     setIsSyncing(true);
+    setSyncError(null);
 
     const invoiceToSave = {
       invoiceData: { ...invoiceData },
@@ -430,7 +492,13 @@ function App() {
     // Calculate changes in stock
     const oldInvoice = editingId ? history.find(item => item.id === editingId) : null;
     const oldItems = oldInvoice ? oldInvoice.items : [];
-    await adjustStock(items, oldItems);
+    
+    try {
+      await adjustStock(items, oldItems);
+    } catch (err) {
+      console.error("Failed to adjust stock database:", err);
+      // Proceed with saving history locally anyway
+    }
 
     if (editingId) {
       setHistory(prev => prev.map(item =>
@@ -438,7 +506,13 @@ function App() {
       ));
 
       if (isFirebaseConfigured) {
-        await updateHistoryOnline(editingId, invoiceToSave);
+        try {
+          await updateHistoryOnline(editingId, invoiceToSave);
+        } catch (error) {
+          console.error("Failed to update invoice online:", error);
+          setSyncError(error.message || "Failed to update invoice on the cloud.");
+          alert(`⚠️ Saved Locally Only:\nDatabase update failed (${error.message || "Unknown error"}). Your changes are saved locally but were not uploaded to the cloud database.`);
+        }
       }
     } else {
       const tempId = Date.now();
@@ -446,11 +520,17 @@ function App() {
       setHistory(prev => [historyItem, ...prev]);
 
       if (isFirebaseConfigured) {
-        const newId = await saveHistoryOnline(invoiceToSave);
-        if (newId) {
-          setHistory(prev => prev.map(item =>
-            item.id === tempId ? { ...item, id: newId } : item
-          ));
+        try {
+          const newId = await saveHistoryOnline(invoiceToSave);
+          if (newId) {
+            setHistory(prev => prev.map(item =>
+              item.id === tempId ? { ...item, id: newId } : item
+            ));
+          }
+        } catch (error) {
+          console.error("Failed to save invoice online:", error);
+          setSyncError(error.message || "Failed to save invoice to the cloud.");
+          alert(`⚠️ Saved Locally Only:\nDatabase write failed (${error.message || "Unknown error"}). The invoice was saved locally on your device but could not be synced online.`);
         }
       }
     }
@@ -501,16 +581,27 @@ function App() {
     e.stopPropagation();
     if (confirm('Delete this history record permanently?')) {
       setIsSyncing(true);
+      setSyncError(null);
 
       const invoiceToDelete = history.find(item => item.id === id);
       if (invoiceToDelete) {
-        await adjustStock([], invoiceToDelete.items);
+        try {
+          await adjustStock([], invoiceToDelete.items);
+        } catch (err) {
+          console.error("Failed to adjust stock on delete:", err);
+        }
       }
 
       setHistory(prev => prev.filter(item => item.id !== id));
 
       if (isFirebaseConfigured) {
-        await deleteHistoryOnline(id);
+        try {
+          await deleteHistoryOnline(id);
+        } catch (error) {
+          console.error("Failed to delete invoice online:", error);
+          setSyncError(error.message || "Failed to delete invoice from the cloud.");
+          alert(`⚠️ Deleted Locally Only:\nDatabase deletion failed (${error.message || "Unknown error"}). The invoice was removed from this device, but may still exist on the cloud database.`);
+        }
       }
 
       if (editingId === id) {
@@ -699,19 +790,19 @@ function App() {
             className={`tab-btn ${viewMode === 'edit' ? 'active' : ''}`}
             onClick={() => setViewMode('edit')}
           >
-            {isReadOnly ? '📋 Viewing Detail' : '✍️ Create New'}
+            {isReadOnly ? <><FileText className="icon-inline" /> Viewing Detail</> : <><FilePlus className="icon-inline" /> Create New</>}
           </button>
           <button
             className={`tab-btn ${viewMode === 'history' ? 'active' : ''}`}
             onClick={() => setViewMode('history')}
           >
-            🕒 Recent History
+            <><Clock3 className="icon-inline" /> Recent History</>
           </button>
           <button
             className={`tab-btn ${viewMode === 'stock' ? 'active' : ''}`}
             onClick={() => setViewMode('stock')}
           >
-            📦 Stock Management
+            <><Archive className="icon-inline" /> Stock Management</>
           </button>
         </div>
 
@@ -730,13 +821,13 @@ function App() {
                   className="btn"
                   style={{ width: '100%', background: '#fffbeb', border: '2px solid #fbbf24', color: '#92400e', fontSize: '0.9rem', padding: '0.6rem' }}
                 >
-                  🔓 Unlock & Edit
+                  <Unlock className="icon-inline-small" /> Unlock & Edit
                 </button>
               </div>
             )}
 
             <h1 className="editor-title">
-              <span>{isReadOnly ? '📄' : (editingId ? '✏️' : '📝')}</span>
+              {isReadOnly ? <><FileText className="icon-inline" /></> : (editingId ? <><Edit3 className="icon-inline" /></> : <><ShoppingCart className="icon-inline" /></>)}
               {isReadOnly ? ' Sales Attachment' : (editingId ? ' Edit Saved Record' : ' Sales Attachment')}
             </h1>
 
@@ -795,7 +886,7 @@ function App() {
 
             <div style={{ marginTop: '2rem' }}>
               <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '1rem', color: '#1e293b', borderLeft: '4px solid #6366f1', paddingLeft: '0.75rem' }}>
-                🛒 Product & Pricing Details
+                <ShoppingCart className="icon-inline" /> Product & Pricing Details
               </h3>
 
               <table className="items-table-editor">
@@ -829,14 +920,14 @@ function App() {
                               const prod = getProductStockInfo(item.description);
                               if (prod) {
                                 if (prod.stockQty <= 0) {
-                                  return <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#ef4444', background: '#fee2e2', padding: '0.15rem 0.5rem', borderRadius: '0.25rem' }}>⚠️ Out of Stock! (0 remaining)</span>;
+                                  return <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#ef4444', background: '#fee2e2', padding: '0.15rem 0.5rem', borderRadius: '0.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><AlertTriangle className="icon-inline-small" /> Out of Stock! (0 remaining)</span>;
                                 } else if (prod.stockQty <= prod.minStockQty) {
-                                  return <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#d97706', background: '#fef3c7', padding: '0.15rem 0.5rem', borderRadius: '0.25rem' }}>⚠️ Low Stock! ({prod.stockQty} remaining)</span>;
+                                  return <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#d97706', background: '#fef3c7', padding: '0.15rem 0.5rem', borderRadius: '0.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><AlertTriangle className="icon-inline-small" /> Low Stock! ({prod.stockQty} remaining)</span>;
                                 } else {
-                                  return <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#10b981', background: '#d1fae5', padding: '0.15rem 0.5rem', borderRadius: '0.25rem' }}>✓ In Stock ({prod.stockQty} remaining)</span>;
+                                  return <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#10b981', background: '#d1fae5', padding: '0.15rem 0.5rem', borderRadius: '0.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><CheckCircle2 className="icon-inline-small" /> In Stock ({prod.stockQty} remaining)</span>;
                                 }
                               } else {
-                                return <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#8b5cf6', background: '#ede9fe', padding: '0.15rem 0.5rem', borderRadius: '0.25rem' }}>✨ New Product (Will auto-create with 5 units stock)</span>;
+                                return <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#8b5cf6', background: '#ede9fe', padding: '0.15rem 0.5rem', borderRadius: '0.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><Sparkles className="icon-inline-small" /> New Product (Will auto-create with 5 units stock)</span>;
                               }
                             })()}
                           </div>
@@ -934,7 +1025,9 @@ function App() {
 
                       {!isReadOnly && (
                         <td style={{ width: '50px' }}>
-                          <button onClick={() => removeItem(item.id)} className="btn btn-remove" style={{ width: '100%', height: '45px' }}>✕</button>
+                          <button onClick={() => removeItem(item.id)} className="btn btn-remove" style={{ width: '100%', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <XCircle size={18} />
+                          </button>
                         </td>
                       )}
                     </tr>
@@ -945,12 +1038,12 @@ function App() {
 
             {!isReadOnly && (
               <>
-                <button onClick={addItem} className="btn btn-add">+ Add Item</button>
+                <button onClick={addItem} className="btn btn-add"><PlusSquare className="icon-inline" /> Add Item</button>
                 <button
                   onClick={() => { if (confirm('Clear all data?')) { setItems([{ id: Date.now(), description: '', unit: 'Pcs', qty: 1, unitPrice: 0 }]); setInvoiceData(prev => ({ ...prev, buyerName: '', buyerTradeName: '', buyerTin: '', buyerVat: '', address: { zone: '', kebele: '', houseNo: '' } })); } }}
                   className="btn btn-reset"
                 >
-                  Reset Form
+                  <RefreshCcw className="icon-inline" /> Reset Form
                 </button>
               </>
             )}
@@ -984,7 +1077,7 @@ function App() {
 
             <div className="btn-print-container" style={{ marginTop: '2rem' }}>
               <button onClick={handlePrint} className="btn btn-primary" style={{ width: '100%' }}>
-                {isReadOnly ? '🖨️ Print Again' : (editingId ? '💾 Update & Print ' : '📤 Export ')}
+                {isReadOnly ? <><Printer className="icon-inline" /> Print Again</> : (editingId ? <><Save className="icon-inline" /> Update & Print</> : <><Upload className="icon-inline" /> Export</>)}
               </button>
             </div>
           </>
@@ -995,7 +1088,7 @@ function App() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <h1 className="editor-title">
-                  <span>🕒</span> Recent History
+                  <Clock3 className="icon-inline" /> Recent History
                 </h1>
                 <p style={{ marginBottom: '1.5rem', color: '#64748b', fontSize: '0.9rem' }}>
                   All invoices are stored permanently on this device until deleted.
@@ -1010,11 +1103,14 @@ function App() {
                   borderRadius: '2rem',
                   fontSize: '0.75rem',
                   fontWeight: '700',
-                  background: isFirebaseConfigured ? '#ecfdf5' : '#fef2f2',
-                  color: isFirebaseConfigured ? '#059669' : '#dc2626',
-                  border: `1px solid ${isFirebaseConfigured ? '#10b981' : '#f87171'}`
+                  background: isFirebaseConfigured ? (syncError ? '#fef2f2' : '#ecfdf5') : '#fef2f2',
+                  color: isFirebaseConfigured ? (syncError ? '#ef4444' : '#059669') : '#dc2626',
+                  border: `1px solid ${isFirebaseConfigured ? (syncError ? '#f87171' : '#10b981') : '#f87171'}`
                 }}>
-                  {isFirebaseConfigured ? '☁️ Cloud Synced' : '🔌 Local Only'}
+                  {isFirebaseConfigured 
+                    ? (syncError ? <><AlertTriangle className="icon-inline-small" /> Sync Error</> : <><Cloud className="icon-inline-small" /> Cloud Synced</>) 
+                    : <><Plug className="icon-inline-small" /> Local Only</>
+                  }
                 </div>
                 {!isFirebaseConfigured && (
                   <p style={{ fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.25rem' }}>
@@ -1023,6 +1119,30 @@ function App() {
                 )}
               </div>
             </div>
+
+            {syncError && (
+              <div style={{
+                background: '#fef2f2',
+                border: '1px solid #f87171',
+                borderRadius: '1rem',
+                padding: '1rem 1.25rem',
+                marginBottom: '1.5rem',
+                color: '#991b1b',
+                fontSize: '0.9rem',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}>
+                <AlertTriangle style={{ color: '#ef4444', flexShrink: 0 }} size={20} />
+                <div>
+                  <strong style={{ fontWeight: '700' }}>Cloud Database Sync Error:</strong> {syncError}
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#7f1d1d' }}>
+                    Using local offline storage fallback. Please check your internet connection, Firebase configuration, or Firestore security rules.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {isSyncing && (
               <div style={{
@@ -1042,7 +1162,7 @@ function App() {
             <div className="history-list">
               {history.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '3rem', background: '#f8fafc', borderRadius: '1.5rem', border: '2px dashed #e2e8f0' }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📭</div>
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem', display: 'inline-flex' }}><Mail size={48} /></div>
                   <p style={{ fontWeight: '600', color: '#94a3b8' }}>No history records found yet.</p>
                   <button onClick={createNewInvoice} className="btn btn-primary" style={{ marginTop: '1rem' }}>Create First Invoice</button>
                 </div>
@@ -1074,7 +1194,7 @@ function App() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h1 className="editor-title" style={{ margin: 0 }}>
-                <span>📦</span> Stock management
+                <Archive className="icon-inline" /> Stock management
               </h1>
               {!showProductModal && (
                 <button 
@@ -1085,10 +1205,34 @@ function App() {
                   className="btn btn-primary"
                   style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                 >
-                  ➕ Add Product
+                  <PlusSquare className="icon-inline" /> Add Product
                 </button>
               )}
             </div>
+
+            {syncError && (
+              <div style={{
+                background: '#fef2f2',
+                border: '1px solid #f87171',
+                borderRadius: '1rem',
+                padding: '1rem 1.25rem',
+                marginBottom: '1.5rem',
+                color: '#991b1b',
+                fontSize: '0.9rem',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}>
+                <AlertTriangle style={{ color: '#ef4444', flexShrink: 0 }} size={20} />
+                <div>
+                  <strong style={{ fontWeight: '700' }}>Cloud Database Sync Error:</strong> {syncError}
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#7f1d1d' }}>
+                    Using local offline storage fallback. Please check your internet connection, Firebase configuration, or Firestore security rules.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {showProductModal && (
               <div style={{
@@ -1100,7 +1244,7 @@ function App() {
                 boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.1)'
               }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '1rem', color: '#4f46e5' }}>
-                  {productForm.id ? '✏️ Edit Product' : '➕ Add New Product'}
+                  {productForm.id ? <><Edit3 className="icon-inline" /> Edit Product</> : <><PlusSquare className="icon-inline" /> Add New Product</>}
                 </h3>
                 
                 <div className="form-group">
@@ -1182,7 +1326,7 @@ function App() {
             <div className="form-group" style={{ marginBottom: '1.5rem' }}>
               <input 
                 type="text" 
-                placeholder="🔍 Search products..." 
+                placeholder="Search products..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="form-input"
@@ -1231,9 +1375,9 @@ function App() {
                           width: '36px', height: '36px', borderRadius: '0.6rem', flexShrink: 0,
                           background: isOut ? '#fee2e2' : (isLow ? '#fef3c7' : '#ede9fe'),
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '1rem'
+                          color: isOut ? '#ef4444' : (isLow ? '#d97706' : '#4f46e5')
                         }}>
-                          {isOut ? '❌' : (isLow ? '⚠️' : '📦')}
+                          {isOut ? <XCircle size={18} /> : (isLow ? <AlertTriangle size={18} /> : <Package size={18} />)}
                         </div>
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.92rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1254,9 +1398,12 @@ function App() {
                           fontWeight: '800',
                           whiteSpace: 'nowrap',
                           background: isOut ? '#fee2e2' : (isLow ? '#fef3c7' : '#d1fae5'),
-                          color: isOut ? '#ef4444' : (isLow ? '#b45309' : '#065f46')
+                          color: isOut ? '#ef4444' : (isLow ? '#b45309' : '#065f46'),
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem'
                         }}>
-                          {isOut ? '0 – Out' : (isLow ? `⚠ ${qty} ${prod.unit}` : `${qty} ${prod.unit}`)}
+                          {isOut ? <><XCircle size={14} /> 0 – Out</> : (isLow ? <><AlertTriangle size={14} /> {qty} {prod.unit}</> : <><Package size={14} /> {qty} {prod.unit}</>)}
                         </span>
 
                         {/* Edit Button */}
@@ -1294,7 +1441,7 @@ function App() {
                           onMouseEnter={e => { e.currentTarget.style.background = '#ddd6fe'; e.currentTarget.style.transform = 'scale(1.1)'; }}
                           onMouseLeave={e => { e.currentTarget.style.background = '#ede9fe'; e.currentTarget.style.transform = 'scale(1)'; }}
                         >
-                          ✏️
+                          <Edit3 size={16} />
                         </button>
 
                         {/* Delete Button */}
@@ -1319,7 +1466,7 @@ function App() {
                           onMouseEnter={e => { e.currentTarget.style.background = '#fecaca'; e.currentTarget.style.transform = 'scale(1.1)'; }}
                           onMouseLeave={e => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.transform = 'scale(1)'; }}
                         >
-                          🗑️
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </div>
@@ -1335,47 +1482,88 @@ function App() {
       {viewMode === 'stock' ? (
         <main className="preview-section" style={{ background: '#f8fafc', padding: '2rem' }}>
           <div style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}>
-            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#1e293b', marginBottom: '1.5rem' }}>
-              📊 Inventory Analytics & Health
+            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#1e293b', marginBottom: '1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.75rem' }}>
+              <BarChart3 size={28} /> Inventory Analytics & Health
             </h2>
             
             {/* Metric Cards Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+
+              {/* Total Products Card */}
               <div className="dashboard-card" style={{
-                background: 'white',
-                padding: '1.5rem',
-                borderRadius: '1.25rem',
-                border: '1px solid #e2e8f0',
-                borderLeft: '5px solid #4f46e5',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                padding: '1.75rem',
+                borderRadius: '1.5rem',
+                boxShadow: '0 10px 25px -5px rgba(99,102,241,0.4)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.5rem'
+                gap: '0.4rem',
+                position: 'relative',
+                overflow: 'hidden'
               }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>Total Products</span>
-                <span style={{ fontSize: '2rem', fontWeight: '800', color: '#4f46e5' }}>{products.length}</span>
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Unique items registered</span>
+                <div style={{
+                  position: 'absolute', top: '-18px', right: '-18px',
+                  width: '90px', height: '90px', borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.1)'
+                }} />
+                <div style={{
+                  position: 'absolute', bottom: '-30px', right: '20px',
+                  width: '120px', height: '120px', borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.06)'
+                }} />
+                <Package size={32} />
+                <span style={{ fontSize: '2.6rem', fontWeight: '900', color: 'white', lineHeight: 1.1 }}>{products.length}</span>
+                <span style={{ fontSize: '0.95rem', fontWeight: '700', color: 'rgba(255,255,255,0.9)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Products</span>
+                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginTop: '0.15rem' }}>Unique items registered</span>
               </div>
 
+              {/* Low / Out of Stock Card */}
+              {(() => {
+                const outCount = products.filter(p => (parseFloat(p.stockQty) || 0) <= 0).length;
+                const lowCount = products.filter(p => { const q = parseFloat(p.stockQty) || 0; return q > 0 && q <= p.minStockQty; }).length;
+                const totalAlert = outCount + lowCount;
+                const hasAlert = totalAlert > 0;
+                return (
+                  <div className="dashboard-card" style={{
+                    background: hasAlert
+                      ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                      : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    padding: '1.75rem',
+                    borderRadius: '1.5rem',
+                    boxShadow: hasAlert
+                      ? '0 10px 25px -5px rgba(239,68,68,0.4)'
+                      : '0 10px 25px -5px rgba(16,185,129,0.35)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.4rem',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{
+                      position: 'absolute', top: '-18px', right: '-18px',
+                      width: '90px', height: '90px', borderRadius: '50%',
+                      background: 'rgba(255,255,255,0.1)'
+                    }} />
+                    <div style={{
+                      position: 'absolute', bottom: '-30px', right: '20px',
+                      width: '120px', height: '120px', borderRadius: '50%',
+                      background: 'rgba(255,255,255,0.06)'
+                    }} />
+                    <span style={{ fontSize: '2rem', lineHeight: 1 }}>{hasAlert ? <AlertTriangle size={28} /> : <CheckCircle2 size={28} />}</span>
+                    <span style={{ fontSize: '2.6rem', fontWeight: '900', color: 'white', lineHeight: 1.1 }}>{totalAlert}</span>
+                    <span style={{ fontSize: '0.95rem', fontWeight: '700', color: 'rgba(255,255,255,0.9)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Stock Alerts</span>
+                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.35rem' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: '700', color: 'rgba(255,255,255,0.85)', background: 'rgba(0,0,0,0.18)', borderRadius: '2rem', padding: '0.2rem 0.55rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <XCircle size={14} /> Out: {outCount}
+                      </span>
+                      <span style={{ fontSize: '0.72rem', fontWeight: '700', color: 'rgba(255,255,255,0.85)', background: 'rgba(0,0,0,0.18)', borderRadius: '2rem', padding: '0.2rem 0.55rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <AlertTriangle size={14} /> Low: {lowCount}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
-
-              <div className="dashboard-card" style={{
-                background: 'white',
-                padding: '1.5rem',
-                borderRadius: '1.25rem',
-                border: '1px solid #e2e8f0',
-                borderLeft: '5px solid #ef4444',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem'
-              }}>
-                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>Low/Out of Stock</span>
-                <span style={{ fontSize: '2rem', fontWeight: '800', color: '#ef4444' }}>
-                  {products.filter(p => (parseFloat(p.stockQty) || 0) <= p.minStockQty).length}
-                </span>
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Items requiring attention</span>
-              </div>
             </div>
 
             {/* Restock Alerts & Stock list summary */}
@@ -1389,8 +1577,8 @@ function App() {
                 border: '1px solid #e2e8f0',
                 boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
               }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#1e293b', marginBottom: '1.25rem', borderBottom: '2px solid #f1f5f9', paddingBottom: '0.5rem' }}>
-                  📈 Stock Capacity Levels
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#1e293b', marginBottom: '1.25rem', borderBottom: '2px solid #f1f5f9', paddingBottom: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <TrendingUp size={18} /> Stock Capacity Levels
                 </h3>
                 
                 {products.length === 0 ? (
@@ -1441,7 +1629,7 @@ function App() {
                   if (lowItems.length === 0) {
                     return (
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '2rem', textAlign: 'center' }}>
-                        <span style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>✅</span>
+                        <CheckCircle2 size={40} style={{ marginBottom: '0.5rem' }} />
                         <p style={{ color: '#10b981', fontWeight: '700', fontSize: '0.9rem' }}>All Stock Levels Healthy</p>
                         <p style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '0.25rem' }}>No restock alerts at this time.</p>
                       </div>
@@ -1562,6 +1750,12 @@ function App() {
                     <td className="label">የተ.እ.ታ.<br />VAT 15%</td>
                     <td>{vat.toLocaleString()}</td>
                   </tr>
+                  {subtotal >= 20001 && (
+                    <tr>
+                      <td className="label">ዊዝሆልዲንግ<br />Withholding 3%</td>
+                      <td>-{withholding.toLocaleString()}</td>
+                    </tr>
+                  )}
                   <tr>
                     <td className="label">ጠቅላላ ድምር ከተ.እ.ታ. ጋር<br />Total (Incl. VAT)</td>
                     <td style={{ fontWeight: 'bold' }}>{total.toLocaleString()}</td>
