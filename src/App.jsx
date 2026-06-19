@@ -469,7 +469,7 @@ function App() {
   const subtotal = calculateSubtotal();
   const vat = subtotal * 0.15;
   const withholding = subtotal >= 20001 ? subtotal * 0.03 : 0;
-  const total = subtotal + vat - withholding;
+  const total = subtotal + vat;
 
   const handlePrint = () => {
     window.print();
