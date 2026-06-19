@@ -33,7 +33,7 @@ export const saveHistoryOnline = async (item) => {
     return docRef.id;
   } catch (e) {
     console.error("Error adding document: ", e);
-    return null;
+    throw e;
   }
 };
 
@@ -48,7 +48,7 @@ export const updateHistoryOnline = async (id, data) => {
     return true;
   } catch (e) {
     console.error("Error updating document: ", e);
-    return false;
+    throw e;
   }
 };
 
@@ -64,7 +64,7 @@ export const fetchHistoryOnline = async () => {
     return history;
   } catch (e) {
     console.error("Error getting documents: ", e);
-    return [];
+    throw e;
   }
 };
 
@@ -75,7 +75,7 @@ export const deleteHistoryOnline = async (id) => {
     return true;
   } catch (e) {
     console.error("Error deleting document: ", e);
-    return false;
+    throw e;
   }
 };
 
@@ -91,7 +91,7 @@ export const saveProductOnline = async (product) => {
     return docRef.id;
   } catch (e) {
     console.error("Error adding product online: ", e);
-    return null;
+    throw e;
   }
 };
 
@@ -106,7 +106,7 @@ export const updateProductOnline = async (id, data) => {
     return true;
   } catch (e) {
     console.error("Error updating product online: ", e);
-    return false;
+    throw e;
   }
 };
 
@@ -122,7 +122,7 @@ export const fetchProductsOnline = async () => {
     return products;
   } catch (e) {
     console.error("Error fetching products online: ", e);
-    return [];
+    throw e;
   }
 };
 
@@ -133,7 +133,7 @@ export const deleteProductOnline = async (id) => {
     return true;
   } catch (e) {
     console.error("Error deleting product online: ", e);
-    return false;
+    throw e;
   }
 };
 
