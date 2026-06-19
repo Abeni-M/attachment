@@ -1743,21 +1743,21 @@ function App() {
               <table className="totals-table">
                 <tbody>
                   <tr>
-                    <td className="label">ድምር<br />Total</td>
+                    <td className="label">Total</td>
                     <td>{subtotal.toLocaleString()}</td>
                   </tr>
                   <tr>
-                    <td className="label">የተ.እ.ታ.<br />VAT 15%</td>
+                    <td className="label">VAT 15%</td>
                     <td>{vat.toLocaleString()}</td>
                   </tr>
                   {subtotal >= 20001 && (
                     <tr>
-                      <td className="label">ዊዝሆልዲንግ<br />Withholding 3%</td>
+                      <td className="label">Withholding 3%</td>
                       <td>{withholding.toLocaleString()}</td>
                     </tr>
                   )}
                   <tr>
-                    <td className="label">ጠቅላላ ድምር ከተ.እ.ታ. ጋር<br />Total (Incl. VAT)</td>
+                    <td className="label">Total (Incl. VAT)</td>
                     <td style={{ fontWeight: 'bold' }}>{total.toLocaleString()}</td>
                   </tr>
                 </tbody>
