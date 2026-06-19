@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, doc, setDoc, deleteDoc } from "firebase/firestore";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -41,10 +41,10 @@ export const updateHistoryOnline = async (id, data) => {
   if (!isFirebaseConfigured) return false;
   try {
     const docRef = doc(db, HISTORY_COLLECTION, id);
-    await updateDoc(docRef, {
+    await setDoc(docRef, {
       ...data,
       updatedAt: new Date().toISOString()
-    });
+    }, { merge: true });
     return true;
   } catch (e) {
     console.error("Error updating document: ", e);
@@ -99,10 +99,10 @@ export const updateProductOnline = async (id, data) => {
   if (!isFirebaseConfigured) return false;
   try {
     const docRef = doc(db, PRODUCTS_COLLECTION, id);
-    await updateDoc(docRef, {
+    await setDoc(docRef, {
       ...data,
       updatedAt: new Date().toISOString()
-    });
+    }, { merge: true });
     return true;
   } catch (e) {
     console.error("Error updating product online: ", e);
