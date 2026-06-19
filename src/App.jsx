@@ -1753,7 +1753,7 @@ function App() {
                   {subtotal >= 20001 && (
                     <tr>
                       <td className="label">ዊዝሆልዲንግ<br />Withholding 3%</td>
-                      <td>-{withholding.toLocaleString()}</td>
+                      <td>{withholding.toLocaleString()}</td>
                     </tr>
                   )}
                   <tr>
