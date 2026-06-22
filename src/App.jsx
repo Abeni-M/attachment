@@ -106,6 +106,7 @@ const formatDateTime = (date = new Date()) => {
 function App() {
   const [invoiceData, setInvoiceData] = useState({
     fsNo: '',
+    onlNo: '0000001',
     date: new Date().toISOString().split('T')[0],
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     buyerName: '',
@@ -475,6 +476,10 @@ function App() {
     window.print();
     if (!isReadOnly) {
       saveRecordToHistory();
+      setInvoiceData(prev => {
+        const currentNo = parseInt(prev.onlNo, 10) || 0;
+        return { ...prev, onlNo: String(currentNo + 1).padStart(7, '0') };
+      });
     }
   };
 
@@ -555,6 +560,7 @@ function App() {
   const createNewInvoice = () => {
     setInvoiceData({
       fsNo: '',
+      onlNo: '0000001',
       date: new Date().toISOString().split('T')[0],
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       buyerName: '',
@@ -831,11 +837,16 @@ function App() {
               {isReadOnly ? ' Sales Attachment' : (editingId ? ' Edit Saved Record' : ' Sales Attachment')}
             </h1>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
               <div className="form-group">
                 <label>FS No.</label>
                 <input type="text" name="fsNo" value={invoiceData.fsNo} onChange={handleInputChange} disabled={isReadOnly} className="form-input" />
                 <span className="help-text">Fiscal Serial Number from your cash register</span>
+              </div>
+              <div className="form-group">
+                <label>No.</label>
+                <input type="text" name="onlNo" value={invoiceData.onlNo} onChange={handleInputChange} disabled={isReadOnly} className="form-input" />
+                <span className="help-text">Online invoice number</span>
               </div>
               <div className="form-group">
                 <label>Date</label>
@@ -1711,6 +1722,7 @@ function App() {
               <div className="details-block">
                 <p><span className="details-label">Date:</span> {formatDate(invoiceData.date)}</p>
                 <p><span className="details-label">Time:</span> {invoiceData.time}</p>
+                <p><span className="details-label">No:</span> {invoiceData.onlNo}</p>
               </div>
             </div>
 
@@ -1743,7 +1755,7 @@ function App() {
               <table className="totals-table">
                 <tbody>
                   <tr>
-                    <td className="label">Total</td>
+                    <td className="label">Sub total</td>
                     <td>{subtotal.toLocaleString()}</td>
                   </tr>
                   <tr>
@@ -1799,7 +1811,7 @@ function App() {
 
             <div style={{ marginTop: '1rem', fontSize: '10px', textAlign: 'center', borderTop: '1px solid #000000ff', paddingTop: '0.5rem' }}>
               INVALID WITHOUT FISCAL RECEIPT ATTACHMENT<br />
-              Distribution: Original - Customer | 1st Copy - Accounts |
+              
             </div>
           </div>
         </main>
